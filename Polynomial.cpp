@@ -32,7 +32,7 @@ public:
     // TODO: убрать ведущие нули -- сейчас они убираются на выводе, но лучше бы они не занимали лишнюю память
     // В идеале надо бы убирать и нули в середине, иначе наши многочлены ничем не отличаются от стандартного вектора, сделанного на коленке
     // конструктор с переданными значениями
-    Polynomial(const int coefficients[], const int length = 1) {
+    Polynomial(const int coefficients[], const unsigned int length = 1) {
         first_monom = new Monom();
         Monom *current_monom = first_monom;
         
@@ -283,10 +283,6 @@ public:
         } while(true);
         
         return *this;
-    }
-    
-    int getPower() {
-        return first_monom->power;
     }
 };
 
