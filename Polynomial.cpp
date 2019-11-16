@@ -337,17 +337,17 @@ int main() {
     
     
     cout << endl << "Тестируем вычитание" << endl
-    << "p(x) = " << p << endl
-    << "q(x) = " << q << endl
-    << "p-q(x) = " << p - q << endl
-    << endl;
+         << "p(x) = " << p << endl
+         << "q(x) = " << q << endl
+         << "p-q(x) = " << p - q << endl
+         << endl;
     
     
     cout << endl << "Тестируем умножение" << endl
-    << "p(x) = " << p << endl
-    << "q(x) = " << q << endl
-    << "p*q(x) = " << p * q << endl
-    << endl;
+         << "p(x) = " << p << endl
+         << "q(x) = " << q << endl
+         << "p*q(x) = " << p * q << endl
+         << endl;
     
     
     return 0;
