@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 
 // Из стандартного пространства имен std
 //  нам понадобятся только операторы ввода-вывода,
@@ -8,6 +9,7 @@ using std::cin;
 using std::cout;
 using std::endl;
 using std::max;
+using std::vector;
 
 struct Monom {
     int coefficient;
@@ -16,9 +18,9 @@ struct Monom {
 };
 
 class Polynomial {
-public:
+private:
     Monom *first_monom;
-    
+public:
     // конструктор по умолчанию
     Polynomial() {
         first_monom = new Monom();
@@ -39,13 +41,34 @@ public:
             current_monom->power = length - 1 - i;
             current_monom->next_monom = new Monom();
             current_monom = current_monom->next_monom;
-            ++i;
+            i++;
         }
         
         current_monom->coefficient = coefficients[i];
         current_monom->power = 0;
         current_monom->next_monom = NULL;
     }
+    
+    Polynomial(const vector<int> &coefficients) {
+        first_monom = new Monom();
+        Monom *current_monom = first_monom;
+        
+        int i = 0;
+        int length = coefficients.size();
+        
+        while (i < length - 1) {
+            current_monom->coefficient = coefficients[i];
+            current_monom->power = length - 1 - i;
+            current_monom->next_monom = new Monom();
+            current_monom = current_monom->next_monom;
+            i++;
+        }
+        
+        current_monom->coefficient = coefficients[i];
+        current_monom->power = 0;
+        current_monom->next_monom = NULL;
+    }
+    
     
     // декструктор
     // по-хорошему надо пройтись по всему списку и освободить память
@@ -77,7 +100,9 @@ public:
                     }
                 }
                 
-                if (current_monom->coefficient != 1 || current_monom->power == 0) {
+                if ( current_monom->power == 0
+                  || (current_monom->coefficient != 1 && current_monom->coefficient != -1)
+                ) {
                     out << abs(current_monom->coefficient);
                 }
                 
@@ -142,37 +167,89 @@ public:
     }
     
     friend Polynomial operator+ (const Polynomial &p, const Polynomial &q) {
-        Polynomial result;
+        vector<int> result_coefficients;
+
+        const int result_power = max(p.first_monom->power, q.first_monom->power);
+        
+        result_coefficients.reserve(result_power + 1);
+        for (int i = 0; i < result_power + 1; i++) {
+            result_coefficients.push_back(0);
+        }
 
         Monom *current_monom_p = p.first_monom;
         Monom *current_monom_q = q.first_monom;
 
-        result.first_monom = new Monom();
-
-        Monom *current_monom_result = result.first_monom;
-
-        for (int current_power = max(p.first_monom->power, q.first_monom->power); current_power >= 0; --current_power) {
-            current_monom_result->power = current_power;
-            current_monom_result->coefficient = 0;
-            
+        for (int current_power = result_power; current_power >= 0; current_power--) {
             if (current_power == current_monom_p->power) {
-                current_monom_result->coefficient += current_monom_p->coefficient;
+                result_coefficients[result_power - current_power] += current_monom_p->coefficient;
                 current_monom_p = current_monom_p->next_monom;
             }
             if (current_power == current_monom_q->power) {
-                current_monom_result->coefficient += current_monom_q->coefficient;
+                result_coefficients[result_power - current_power] += current_monom_q->coefficient;
                 current_monom_q = current_monom_q->next_monom;
             }
+        }
+        
+        return Polynomial(result_coefficients);
+    }
+    
+    friend Polynomial operator- (const Polynomial &p, const Polynomial &q) {
+        vector<int> result_coefficients;
 
-            if (current_power > 0) {
-                current_monom_result->next_monom = new Monom();
-                current_monom_result = current_monom_result->next_monom;
-            } else {
-                current_monom_result->next_monom = NULL;
-            }
+        const int result_power = max(p.first_monom->power, q.first_monom->power);
+        
+        result_coefficients.reserve(result_power + 1);
+        for (int i = 0; i < result_power + 1; i++) {
+            result_coefficients.push_back(0);
         }
 
-        return result;
+        Monom *current_monom_p = p.first_monom;
+        Monom *current_monom_q = q.first_monom;
+
+        for (int current_power = result_power; current_power >= 0; current_power--) {
+            if (current_power == current_monom_p->power) {
+                result_coefficients[result_power - current_power] += current_monom_p->coefficient;
+                current_monom_p = current_monom_p->next_monom;
+            }
+            if (current_power == current_monom_q->power) {
+                result_coefficients[result_power - current_power] -= current_monom_q->coefficient;
+                current_monom_q = current_monom_q->next_monom;
+            }
+        }
+        
+        return Polynomial(result_coefficients);
+    }
+    
+    friend Polynomial operator* (const Polynomial &p, const Polynomial &q) {
+        vector<int> result_coefficients;
+
+        const int result_power = p.first_monom->power + q.first_monom->power;
+        
+        result_coefficients.reserve(result_power + 1);
+        for (int i = 0; i < result_power + 1; i++) {
+            result_coefficients.push_back(0);
+        }
+
+        Monom *current_monom_p = p.first_monom;
+        Monom *current_monom_q;
+        
+        for (int p_power = p.first_monom->power; p_power >= 0; p_power--) {
+            current_monom_q = q.first_monom;
+            
+            for (int q_power = q.first_monom->power; q_power >= 0; q_power--) {
+                result_coefficients[result_power - p_power - q_power] += current_monom_p->coefficient * current_monom_q->coefficient;
+                
+                if (current_monom_q->next_monom != NULL) {
+                    current_monom_q = current_monom_q->next_monom;
+                }
+            }
+            
+            if (current_monom_p->next_monom != NULL) {
+                current_monom_p = current_monom_p->next_monom;
+            }
+        }
+        
+        return Polynomial(result_coefficients);
     }
     
     // производная теперь изменяет объект и возвращает его
@@ -181,7 +258,7 @@ public:
         
         do {
             current_monom->coefficient *= current_monom->power;
-            --current_monom->power;
+            current_monom->power--;
             if (current_monom->power == 0) {
                 delete current_monom->next_monom;
                 current_monom->next_monom = NULL;
@@ -205,9 +282,13 @@ int main() {
          << "Тестируем конструкторы многочленов" << endl;
     
     // TODO: считывать эти массивы с клавиатуры
-    const int coefficients_p[4] = {4, 0, 1, 3};
-    const int length_p = 4;
-    Polynomial p(coefficients_p, length_p);
+//     vector<int> coefficients_p = {4, 0, 1, 3}; // начиная с С++11
+    vector<int> coefficients_p;
+    coefficients_p.push_back(4);
+    coefficients_p.push_back(0);
+    coefficients_p.push_back(2);
+    coefficients_p.push_back(3);
+    Polynomial p(coefficients_p);
     
     const int coefficients_q[4] = {-5, 2, 1, 3};
     const int length_q = 4;
@@ -253,6 +334,20 @@ int main() {
          << "q(x) = " << q << endl
          << "p+q(x) = " << p + q << endl
          << endl;
+    
+    
+    cout << endl << "Тестируем вычитание" << endl
+    << "p(x) = " << p << endl
+    << "q(x) = " << q << endl
+    << "p-q(x) = " << p - q << endl
+    << endl;
+    
+    
+    cout << endl << "Тестируем умножение" << endl
+    << "p(x) = " << p << endl
+    << "q(x) = " << q << endl
+    << "p*q(x) = " << p * q << endl
+    << endl;
     
     
     return 0;
