@@ -30,6 +30,7 @@ public:
     }
     
     // TODO: убрать ведущие нули -- сейчас они убираются на выводе, но лучше бы они не занимали лишнюю память
+    // В идеале надо бы убирать и нули в середине, иначе наши многочлены ничем не отличаются от стандартного вектора, сделанного на коленке
     // конструктор с переданными значениями
     Polynomial(const int coefficients[], const int length = 1) {
         first_monom = new Monom();
@@ -252,6 +253,19 @@ public:
         return Polynomial(result_coefficients);
     }
     
+    friend Polynomial operator^ (const Polynomial &p, const unsigned int n) {
+        if (n == 0) {
+            int v[1] = {1};
+            return Polynomial(v, 1);
+        }
+        
+        if (n == 1) {
+            return p;
+        }
+        
+        return p * (p ^ (n-1));
+    }
+    
     // производная теперь изменяет объект и возвращает его
     Polynomial& differentiate() {
         Monom *current_monom = first_monom;
@@ -317,7 +331,7 @@ int main() {
         << "Тестируем вычисление значений в точке" << endl
         << "p(x) = " << p << endl;
     
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 10; i++) {
         cout << "p(" << i << ") = " << p(i) << endl;
     }
     cout << endl;
@@ -348,6 +362,15 @@ int main() {
          << "q(x) = " << q << endl
          << "p*q(x) = " << p * q << endl
          << endl;
+    
+    
+    cout << endl << "Тестируем возведение в степень" << endl
+         << "p(x) = " << p << endl;
+        
+    for (int i = 0; i < 5; i++) {
+        cout << "p^" << i << "(x) = " << (p ^ i) << endl;
+    }
+    cout << endl;
     
     
     return 0;
