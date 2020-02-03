@@ -34,7 +34,7 @@ public:
     }
     
     bool isEmpty() {
-        return root == NULL;
+        return root == NULL;        
     }
     
     PElem addElement(int a) {
@@ -46,6 +46,9 @@ public:
             if (a == root->data) {
                 return NULL;
             }
+            
+
+
             
             if (a < root->data) {
                 root->left = SearchTree(root->left).addElement(a);
