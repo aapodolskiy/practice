@@ -11,9 +11,6 @@ struct Elem {
 
 typedef Elem * PElem;
 
-// для альтернативного способа печати в виде ярусов
-//bool is_power_of_2(int n) { return n > 0 && (n & (n - 1)) == 0; }
-
 PElem Create(int x) {
     PElem b = new Elem;
     b->left = NULL;
