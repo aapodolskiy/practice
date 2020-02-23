@@ -47,6 +47,119 @@ private:
         }
     }
     
+    static void findElement(int a, PElem &target, PElem &father) {
+        if (target == NULL || target->data == a) {
+            return;
+        }
+        
+        father = target;
+        
+        if (a < target->data) {
+            target = target->left;
+            findElement(a, target, father);
+        } else {
+            target = target->right;
+            findElement(a, target, father);
+        }
+    }
+    
+    static void removeElement(PElem &p, int a) {
+        PElem &root = p;
+        PElem target = p;
+        PElem father = NULL;
+        SearchTree::findElement(a, target, father);
+        
+        if (target == NULL) {
+            return;
+        }
+        
+        if (SearchTree::isLeaf(target)) {
+            if (father == NULL) {
+                root = NULL;
+                return;
+            } else if (father->left == target) {
+                father->left = NULL;
+            } else if (father->right == target) {
+                father->right = NULL;
+            } else {
+                cout << "error 1582497703";
+                return;
+            }
+            SearchTree::freeMemory(target);
+            return;
+        }
+        
+        if (target->left == NULL) {
+            if (father == NULL) {
+                root = target->right;
+            } else if (father->left == target) {
+                father->left = target->right;
+            } else if (father->right == target) {
+                father->right = target->right;
+            } else {
+                cout << "error 1582497728";
+                return;
+            }
+            target->right = NULL;
+            SearchTree::freeMemory(target);
+            return;
+        }
+        
+        if (target->right == NULL) {
+            if (father == NULL) {
+                root = target->left;
+            } else if (father->left == target) {
+                father->left = target->left;
+            } else if (father->right == target) {
+                father->right = target->left;
+            } else {
+                cout << "error 1582497756";
+                return;
+            }
+            target->left = NULL;
+            SearchTree::freeMemory(target);
+            return;
+        }
+        
+        PElem smallestOnTheRight = target->right;
+        PElem fatherOfSmallestOnTheRight = target;
+        while (smallestOnTheRight->left != NULL) {
+            fatherOfSmallestOnTheRight = smallestOnTheRight;
+            smallestOnTheRight = smallestOnTheRight->left;
+        }
+        
+        if (fatherOfSmallestOnTheRight->right == smallestOnTheRight) {
+            fatherOfSmallestOnTheRight->right = NULL;
+        } else if (fatherOfSmallestOnTheRight->left == smallestOnTheRight) {
+            fatherOfSmallestOnTheRight->left = smallestOnTheRight->right;
+        } else {
+            cout << "error 1582497773";
+            return;
+        }
+        
+        smallestOnTheRight->left = target->left;
+        smallestOnTheRight->right = target->right;
+        
+        if (father == NULL) {
+            root = smallestOnTheRight;
+        } else if (father->left == target) {
+            father->left = smallestOnTheRight;
+        } else if (father->right == target) {
+            father->right = smallestOnTheRight;
+        } else {
+            cout << "error 1582497779";
+            return;
+        }
+        
+        target->left = NULL;
+        target->right = NULL;
+        SearchTree::freeMemory(target);
+    }
+    
+    static bool isLeaf(const PElem &p) {
+        return p->left == NULL && p->right == NULL;
+    }
+    
     static int getHeight(const PElem &p) {
         if (p == NULL) {
             return 0;
@@ -118,6 +231,10 @@ public:
     
     void appendElement(int n) {
         SearchTree::addElement(root, n);
+    }
+    
+    void removeElement(int n) {
+        SearchTree::removeElement(root, n);
     }
     
     void printTiers() {
@@ -212,6 +329,14 @@ int main() {
     
     cout << endl << "append element (4): " << endl;
     a.appendElement(4);
+    cout << endl;
+    
+    cout << endl << "print tiers more beautiful: " << endl;
+    a.printTiersMoreBeautiful();
+    cout << endl;
+    
+    cout << endl << "remove element (1): " << endl;
+    a.removeElement(3);
     cout << endl;
     
     cout << endl << "print tiers more beautiful: " << endl;
