@@ -336,7 +336,7 @@ int main() {
     cout << "Please, enter number n: ";
     cin >> n;
     
-    cout << "Now enter n integers separated by whitespace: ";
+    cout << "Now enter n positive integers separated by whitespace: ";
     int values[n];
     for(int i = 0; i < n; i++) {
         cin >> values[i];
