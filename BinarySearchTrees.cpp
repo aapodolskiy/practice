@@ -116,6 +116,10 @@ public:
         }
     }
     
+    void appendElement(int n) {
+        SearchTree::addElement(root, n);
+    }
+    
     void printTiers() {
         int h = SearchTree::getHeight(root);
         if (h == 0) {
@@ -199,11 +203,15 @@ public:
 };
 
 int main() {
-    int t[10] = {3, 5, 1, 2, 4, 7, 8, 0, 11, 6};
+    int t[10] = {3, 7, 1, 2, 5, 6, 9, 0, 11, 8};
     SearchTree a(t, 10);
     
     cout << endl << "print tiers: " << endl;
     a.printTiers();
+    cout << endl;
+    
+    cout << endl << "append element (4): " << endl;
+    a.appendElement(4);
     cout << endl;
     
     cout << endl << "print tiers more beautiful: " << endl;
