@@ -128,10 +128,12 @@ private:
             smallestOnTheRight = smallestOnTheRight->left;
         }
         
-        if (fatherOfSmallestOnTheRight->right == smallestOnTheRight) {
-            fatherOfSmallestOnTheRight->right = NULL;
+        if (fatherOfSmallestOnTheRight == NULL) {
+            root->right = smallestOnTheRight->right;
         } else if (fatherOfSmallestOnTheRight->left == smallestOnTheRight) {
             fatherOfSmallestOnTheRight->left = smallestOnTheRight->right;
+        } else if (fatherOfSmallestOnTheRight->right == smallestOnTheRight) {
+            fatherOfSmallestOnTheRight->right = smallestOnTheRight->right;
         } else {
             cout << "error 1582497773";
             return;
@@ -264,9 +266,7 @@ public:
                 }
                 cout << string(pow(2, h-i+1)-1, free_space_character);
             }
-            if (i != h-1) {
-                cout << endl;
-            }
+            cout << endl;
         }
     }
     
@@ -299,19 +299,31 @@ public:
                 }
                 position += step;
             }
-        
-            if (i != 1) {
-                cout << endl;
-            }
+            cout << endl;
         }
+    }
+    
+    static void printHelp() {
+        cout << "List of commands:" << endl
+             << "a <n> - to add positive integer <n> to SearchTree" << endl
+             << "r <n> - to remove integer <n> from SearchTree" << endl
+             << "p - to print SearchTree in visual form" << endl
+             << "i - to print SearchTree in increasing order" << endl
+             << "d - to print SearchTree in decreasing order" << endl
+             << "u - to print SearchTree in ugly visual form" << endl
+             << "h - to see this help message" << endl
+             << "q - to quit" << endl
+        ;
     }
     
     void increasingPrint() {
         SearchTree::increasingPrint(root);
+        cout << endl;
     }
     
     void decreasingPrint() {
         SearchTree::decreasingPrint(root);
+        cout << endl;
     }
     
     ~SearchTree() {
@@ -320,36 +332,63 @@ public:
 };
 
 int main() {
-    int t[10] = {3, 7, 1, 2, 5, 6, 9, 0, 11, 8};
-    SearchTree a(t, 10);
+    int n = 0;
+    cout << "Please, enter number n: ";
+    cin >> n;
     
-    cout << endl << "print tiers: " << endl;
-    a.printTiers();
-    cout << endl;
+    cout << "Now enter n integers separated by whitespace: ";
+    int values[n];
+    for(int i = 0; i < n; i++) {
+        cin >> values[i];
+    }
     
-    cout << endl << "append element (4): " << endl;
-    a.appendElement(4);
-    cout << endl;
+    SearchTree searchTree(values, n);
     
-    cout << endl << "print tiers more beautiful: " << endl;
-    a.printTiersMoreBeautiful();
-    cout << endl;
+    cout << "Cool! We've built SearchTree from your values:" << endl;
+    searchTree.printTiersMoreBeautiful();
     
-    cout << endl << "remove element (1): " << endl;
-    a.removeElement(3);
     cout << endl;
+    SearchTree::printHelp();
     
-    cout << endl << "print tiers more beautiful: " << endl;
-    a.printTiersMoreBeautiful();
-    cout << endl;
+    char input = ' ';
+    int a = 0;
+    bool stop = false;
+    do {
+        cin >> input;
+        switch (input) {
+            case 'q':
+                stop = true;
+                break;
+            case 'a':
+                cin >> a;
+                searchTree.appendElement(a);
+                break;
+            case 'r':
+                cin >> a;
+                searchTree.removeElement(a);
+                break;
+            case 'p':
+                searchTree.printTiersMoreBeautiful();
+                break;
+            case 'i':
+                searchTree.increasingPrint();
+                break;
+            case 'd':
+                searchTree.decreasingPrint();
+                break;
+            case 'u':
+                searchTree.printTiers();
+                break;
+            case 'h':
+                SearchTree::printHelp();
+                break;
+            default:
+                cout << "Can't understand you. Type 'h' to see help message." << endl;
+                break;
+        }
+    } while (stop == false);
     
-    cout << endl << "print in increasing order: " << endl;
-    a.increasingPrint();
-    cout << endl;
-    
-    cout << endl << "print in decreasing order: " << endl;
-    a.decreasingPrint();
-    cout << endl;
+    cout << "Goodbye!" << endl;
     
     return 0;
 }
