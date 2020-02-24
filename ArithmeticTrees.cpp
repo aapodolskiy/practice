@@ -1,160 +1,198 @@
 #include <iostream>
 #include <string>
 #include <cmath>
+#include <stack>
+#include <queue>
+#include <cctype>
 
 using namespace std;
 
-struct Elem {
+
+static const char EMPTY = ' ';
+static const char MINUS = '-';
+static const char PLUS = '+';
+static const char MULTIPLY = '*';
+static const char DIVIDE = ':';
+static const char DIVIDE_2 = '/';
+static const char OPEN_BRACKET = '(';
+static const char CLOSE_BRACKET = ')';
+
+struct data {
+    bool is_number;
     int data;
+    char sign;
+};
+
+int operatorPriority(char c) {
+    switch (c) {
+        case MULTIPLY:
+        case DIVIDE:
+        case DIVIDE_2:
+            return 1;
+            break;
+        case MINUS:
+        case PLUS:
+            return 2;
+            break;
+        default:
+            return 999;
+            break;
+    }
+}
+
+bool isCharValidSign(char c) {
+    return c == MINUS
+        || c == PLUS
+        || c == MULTIPLY
+        || c == DIVIDE
+        || c == DIVIDE_2
+        || c == OPEN_BRACKET
+        || c == CLOSE_BRACKET;
+}
+
+void print_data(data d, bool end_trailing_whitespace = true) {
+    if (d.is_number) {
+        cout << d.data;
+    } else {
+        cout << d.sign;
+    }
+    if (end_trailing_whitespace) {
+        cout << " ";
+    }
+}
+
+bool isDataEmpty(const data &d) {
+    return d.sign == EMPTY;
+}
+
+void refreshData(data &d) {
+    d.is_number = false;
+    d.data = 0;
+    d.sign = EMPTY;
+}
+
+void fillData(char c, data &d) {
+    if (isdigit(c)) {
+        d.is_number = true;
+        d.data = d.data * 10 + (c - '0');
+        d.sign = c;
+        return;
+    }
+    if (!isCharValidSign(c)) {
+        return;
+    }
+    d.is_number = false;
+    d.data = 0;
+    d.sign = c;
+}
+
+stack<data> postfixFromInfix(string infix) {
+    data d, o;
+    
+    // 1. преобразуем входные данные в queue<data> q
+    //    это нужно, чтобы убрать лишние символы и чтобы получить многозначные числа
+    queue<data> q;
+    
+    char t;
+    refreshData(d);
+    
+    while (!infix.empty()) {
+        t = infix[0];
+        
+        if (!isdigit(t)) {
+            if (!isDataEmpty(d)) {
+                q.push(d);
+                refreshData(d);
+            }
+            fillData(t, d);
+            if (!isDataEmpty(d)){
+                q.push(d);
+                refreshData(d);
+            }
+        } else {
+            if (!d.is_number) {
+                refreshData(d);
+            }
+            fillData(t, d);
+        }
+        
+        infix.erase(0, 1);
+    }
+    
+    if (!isDataEmpty(d)) {
+        q.push(d);
+    }
+    
+    // 2. создаем итоговый queue<data> result с постфиксной записью
+    stack<data> result;
+    stack<data> operands;
+    
+    while (!q.empty()) {
+        d = q.front();
+        
+        if (d.is_number) {
+            result.push(d);
+        } else if (d.sign == OPEN_BRACKET) {
+            operands.push(d);
+        } else if (d.sign == CLOSE_BRACKET) {
+            while (!operands.empty()) {
+                o = operands.top();
+                if (o.sign == OPEN_BRACKET) {
+                    operands.pop();
+                    break;
+                }
+                result.push(o);
+                operands.pop();
+            }
+        } else {
+            while (!operands.empty()) {
+                o = operands.top();
+                if (operatorPriority(o.sign) >= operatorPriority(d.sign)) {
+                    break;
+                }
+                result.push(o);
+                operands.pop();
+            }
+            operands.push(d);
+        }
+        
+        q.pop();
+    }
+    
+    while (!operands.empty()) {
+        o = operands.top();
+        result.push(o);
+        operands.pop();
+    }
+    
+    return result;
+}
+
+
+struct Elem {
+    data d;
     Elem * left, * right;
 };
 
 typedef Elem * PElem;
 
-PElem Create(int x) {
-    PElem b = new Elem;
-    b->left = NULL;
-    b->right = NULL;
-    b->data = x;
-    return b;
-}
-
-PElem Create() {
-    return Create(0);
-}
-
 class SearchTree {
 private:
     PElem root;
-    static const int plus_sign = -2;
-    static const int minus_sign = -3;
-    static const int multiple_sign = -4;
-    static const int division_sign = -5;
     
-    static void addElement(PElem &p, int a) {
+    static void addElements(PElem &p, stack<data> &s) {
         if (p == NULL) {
             p = new Elem;
-            p->data = a;
+            p->d = s.top();
             p->left = NULL;
             p->right = NULL;
-            return;
-        }
-        
-        if (a < p->data) {
-            SearchTree::addElement(p->left, a);
-            return;
-        }
-        
-        if (p->data < a) {
-            SearchTree::addElement(p->right, a);
-            return;
-        }
-    }
-    
-    static void findElement(int a, PElem &target, PElem &father) {
-        if (target == NULL || target->data == a) {
-            return;
-        }
-        
-        father = target;
-        
-        if (a < target->data) {
-            target = target->left;
-            findElement(a, target, father);
-        } else {
-            target = target->right;
-            findElement(a, target, father);
-        }
-    }
-    
-    static void removeElement(PElem &p, int a) {
-        PElem &root = p;
-        PElem target = p;
-        PElem father = NULL;
-        SearchTree::findElement(a, target, father);
-        
-        if (target == NULL) {
-            return;
-        }
-        
-        if (SearchTree::isLeaf(target)) {
-            if (father == NULL) {
-                root = NULL;
-                return;
-            } else if (father->left == target) {
-                father->left = NULL;
-            } else if (father->right == target) {
-                father->right = NULL;
+            s.pop();
+            if (!p->d.is_number) {
+                SearchTree::addElements(p->right, s);
+                SearchTree::addElements(p->left, s);
             }
-            SearchTree::freeMemory(target);
             return;
         }
-        
-        if (target->left == NULL) {
-            if (father == NULL) {
-                root = target->right;
-            } else if (father->left == target) {
-                father->left = target->right;
-            } else if (father->right == target) {
-                father->right = target->right;
-            }
-            target->right = NULL;
-            SearchTree::freeMemory(target);
-            return;
-        }
-        
-        if (target->right == NULL) {
-            if (father == NULL) {
-                root = target->left;
-            } else if (father->left == target) {
-                father->left = target->left;
-            } else if (father->right == target) {
-                father->right = target->left;
-            }
-            target->left = NULL;
-            SearchTree::freeMemory(target);
-            return;
-        }
-        
-        PElem smallestOnTheRight = target->right;
-
-        PElem fatherOfSmallestOnTheRight = target;
-
-        while (smallestOnTheRight->left != NULL) {
-
-            fatherOfSmallestOnTheRight = smallestOnTheRight;
-
-            smallestOnTheRight = smallestOnTheRight->left;
-        }
-        
-        if (fatherOfSmallestOnTheRight == NULL) {
-            
-            root->right = smallestOnTheRight->right;
-
-        } else if (fatherOfSmallestOnTheRight->left == smallestOnTheRight) {
-            
-            fatherOfSmallestOnTheRight->left = smallestOnTheRight->right;
-
-        } else if (fatherOfSmallestOnTheRight->right == smallestOnTheRight) {
-            
-            fatherOfSmallestOnTheRight->right = smallestOnTheRight->right;
-
-        }
-        
-        smallestOnTheRight->left = target->left;
-        smallestOnTheRight->right = target->right;
-        
-        if (father == NULL) {
-            root = smallestOnTheRight;
-        } else if (father->left == target) {
-            father->left = smallestOnTheRight;
-        } else if (father->right == target) {
-            father->right = smallestOnTheRight;
-        }
-        
-        target->left = NULL;
-        target->right = NULL;
-        SearchTree::freeMemory(target);
     }
     
     static bool isLeaf(const PElem &p) {
@@ -169,25 +207,69 @@ private:
         return 1 + max(SearchTree::getHeight(p->left), SearchTree::getHeight(p->right));
     }
 
-    static int calcResult(const PElem &p) {
-        if (p == NULL){
-            cout << "error";
-            return 0;
+    static void fillTiers(const PElem &p, int shift, int height, data * array_of_tiers) {
+        if (p == NULL) {
+            return;
         }
-        if (p->data > 0){
-            return p->data;
+        int p_position = shift + pow(2, height-1);
+        array_of_tiers[p_position] = p->d;
+        SearchTree::fillTiers(p->left, shift, height-1, array_of_tiers);
+        SearchTree::fillTiers(p->right, p_position, height-1, array_of_tiers);
+    }
+    
+    static void printPrefix(const PElem &p) {
+        if (p == NULL || isDataEmpty(p->d)) {
+            return;
         }
-        switch (p->data) {
-            case SearchTree::minus_sign:
+        print_data(p->d);
+        SearchTree::printPrefix(p->left);
+        SearchTree::printPrefix(p->right);
+    }
+    
+    static void printInfix(const PElem &p) {
+        if (p == NULL || isDataEmpty(p->d)) {
+            return;
+        }
+        if (p->d.is_number) {
+            print_data(p->d);
+            return;
+        }
+        cout << "( ";
+        SearchTree::printInfix(p->left);
+        cout << ") ";
+        
+        print_data(p->d);
+        
+        cout << "( ";
+        SearchTree::printInfix(p->right);
+        cout << ") ";
+    }
+    
+    static void printPostfix(const PElem &p) {
+        if (p == NULL || isDataEmpty(p->d)) {
+            return;
+        }
+        SearchTree::printPostfix(p->left);
+        SearchTree::printPostfix(p->right);
+        print_data(p->d);
+    }
+    
+    static double calcResult(const PElem &p) {
+        if (p->d.is_number){
+            return p->d.data;
+        }
+        
+        switch (p->d.sign) {
+            case MINUS:
                 return SearchTree::calcResult(p->left) - SearchTree::calcResult(p->right);
-            case SearchTree::plus_sign:
+            case PLUS:
                 return SearchTree::calcResult(p->left) + SearchTree::calcResult(p->right);
-            case SearchTree::multiple_sign:
+            case MULTIPLY:
                 return SearchTree::calcResult(p->left) * SearchTree::calcResult(p->right);
-            case SearchTree::division_sign:
-                return SearchTree::calcResult(p->left) / SearchTree::calcResult(p->right);
+            case DIVIDE:
+                return SearchTree::calcResult(p->left) / (SearchTree::calcResult(p->right) + 0.0);
         }
-        cout << "error 2";
+        
         return 0;
     }
 
@@ -208,22 +290,56 @@ public:
         return root == NULL;
     }
     
-    SearchTree(int elements[], int length) {
+    SearchTree(stack<data> elements) {
         root = NULL;
-        for (int i = 0; i < length; i++) {
-            SearchTree::addElement(root, elements[i]);
+        SearchTree::addElements(root, elements);
+    }
+    
+    void printTiers() {
+        int h = SearchTree::getHeight(root);
+        if (h == 0) {
+            cout << "tree is empty" << endl;
+        }
+        
+        int total_length = pow(2, h);
+        data tiers[total_length];
+        for (int i = 0; i < total_length; i++) {
+            refreshData(tiers[i]);
+        }
+        
+        SearchTree::fillTiers(root, 0, h, tiers);
+        
+        const char free_space_character = ' ';
+
+        for (int i = h; i > 0; i--) {
+            int step = pow(2, i);
+            int position = step / 2;
+            while (position < total_length) {
+                cout << string(min(position, step)-1, free_space_character);
+                if (!isDataEmpty(tiers[position])) {
+                    print_data(tiers[position], false);
+                } else {
+                    cout << free_space_character;
+                }
+                position += step;
+            }
+            cout << endl;
         }
     }
     
-    void appendElement(int n) {
-        SearchTree::addElement(root, n);
+    void printPrefix() {
+        SearchTree::printPrefix(root);
     }
     
-    void removeElement(int n) {
-        SearchTree::removeElement(root, n);
+    void printInfix() {
+        SearchTree::printInfix(root);
     }
-
-    int calcResult() {
+    
+    void printPostfix() {
+        SearchTree::printPostfix(root);
+    }
+    
+    double calcResult() {
         return SearchTree::calcResult(root);
     }
     
@@ -233,45 +349,34 @@ public:
 };
 
 int main() {
-    int n = 0;
-    cout << "Please, enter number n: ";
-    cin >> n;
+    cout << "enter formulae and press enter:" << endl;
+    string input;
+    getline(cin, input);
     
-    cout << "Now enter n positive integers separated by whitespace: ";
-    int values[n];
-    for(int i = 0; i < n; i++) {
-        cin >> values[i];
-    }
+    stack<data> s = postfixFromInfix(input);
+    SearchTree t(s);
     
-    SearchTree searchTree(values, n);
+    cout << endl << "Here is a tree of your formulae:" << endl;
+    t.printTiers();
+    cout << endl;
     
+    cout << endl << "Here is a prefix (+34) representation:" << endl;
+    t.printPrefix();
+    cout << endl;
     
-    char input = ' ';
-    int a = 0;
-    bool stop = false;
-    do {
-        cin >> input;
-        switch (input) {
-            case 'q':
-                stop = true;
-                break;
-            case 'a':
-                cin >> a;
-                searchTree.appendElement(a);
-                break;
-            case 'r':
-                cin >> a;
-                searchTree.removeElement(a);
-                break;
-            case 'c':
-                cout << searchTree.calcResult();
-            default:
-                cout << "Can't understand you." << endl;
-                break;
-        }
-    } while (stop == false);
+    cout << endl << "Here is a postfix (34+) representation:" << endl;
+    t.printPostfix();
+    cout << endl;
     
-    cout << "Goodbye!" << endl;
+    cout << endl << "Here is a infix (3+4) representation:" << endl;
+    t.printInfix();
+    cout << endl;
+    
+    cout << endl << "And, finally, calculated result:" << endl;
+    cout << t.calcResult();
+    cout << endl;
+    
+    cout << endl << "Goodbye!" << endl;
     
     return 0;
 }
