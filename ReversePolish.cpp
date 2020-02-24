@@ -127,7 +127,7 @@ queue<data> postfixFromInfix(string infix) {
     
     
     
-    // 2. создаем итоговый stack<data> result с постфиксной записью
+    // 2. создаем итоговый queue<data> result с постфиксной записью
     queue<data> result;
     stack<data> operands;
     
