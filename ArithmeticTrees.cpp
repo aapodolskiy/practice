@@ -267,6 +267,7 @@ private:
             case MULTIPLY:
                 return SearchTree::calcResult(p->left) * SearchTree::calcResult(p->right);
             case DIVIDE:
+            case DIVIDE_2:
                 return SearchTree::calcResult(p->left) / (SearchTree::calcResult(p->right) + 0.0);
         }
         
